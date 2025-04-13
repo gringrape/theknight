@@ -82,6 +82,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
+    this.createUI();
     this.createImps();
     this.startImpSpawnLoop();
     this.playBackgroundMusic();
@@ -93,6 +94,21 @@ export default class MainScene extends Phaser.Scene {
     this.createPlayer();
     this.setupCollisions();
     this.setupInput();
+  }
+
+  createUI() {
+    this.helpText = this.add.text(
+      this.scale.width / 2,
+      this.scale.height - 40, // ← 여기!
+      '← →: 이동   ↑: 점프   Z: 공격',
+      {
+        fontSize: '24px',
+        fontFamily: 'Arial',
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        padding: { x: 12, y: 4 }
+      }
+    ).setOrigin(0.5, 1).setScrollFactor(0).setDepth(1000);
   }
 
   startImpSpawnLoop() {
@@ -107,14 +123,23 @@ export default class MainScene extends Phaser.Scene {
   
   spawnImpsFromRight(count = 1) {
     const baseY = this.GROUND_START_Y - this.IMP_HEIGHT / 2;
-    const screenRight = this.scale.width + 50;
+
+    // 화면 기준 오른쪽 가장자리 안쪽에서 생성
+    const screenRight = this.cameras.main.scrollX + this.scale.width - 20;
   
     for (let i = 0; i < count; i++) {
       const offsetX = i * 30;
       const offsetY = (i % 2 === 0) ? 0 : -10;
-      this.createImp(screenRight + offsetX, baseY + offsetY);
+  
+      const spawnX = screenRight + offsetX;
+      const spawnY = baseY + offsetY;
+  
+      this.createImp(spawnX, spawnY);
+  
+      // 🔍 디버깅용 로그
+      console.log(`🧟‍♂️ 임프 생성 at (${spawnX}, ${spawnY})`);
     }
-  }  
+  }
 
   createImps() {
     // 👹 임프 그룹 생성
@@ -123,6 +148,7 @@ export default class MainScene extends Phaser.Scene {
     // 👹 임프 생성 함수
     this.createImp = (x, y) => {
       const imp = this.physics.add.sprite(x, y, 'imp_walk');
+      console.log('Imp 위치:', imp.x, imp.y);
       imp.setScale(this.IMP_SCALE);
       imp.body.setSize(18, 30);
       imp.body.setOffset(18, 13);
@@ -275,8 +301,6 @@ export default class MainScene extends Phaser.Scene {
       const y = this.player.y + offsetY;
 
       if (isHitFrame) {
-        this.attackGraphics.fillStyle(0xff0000, 0.5);
-        this.attackGraphics.fillRect(x, y, hitAreaWidth, hitAreaHeight);
         this.attackHitboxZone.setPosition(x + hitAreaWidth / 2, y + hitAreaHeight / 2);
         this.attackHitboxZone.body.enable = true;
       } else {
